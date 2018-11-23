@@ -1,0 +1,4 @@
+﻿  pch.cpp
+  dll.cpp
+     Создается библиотека C:\Users\Danila\source\repos\dll\x64\Debug\dll.lib и объект C:\Users\Danila\source\repos\dll\x64\Debug\dll.exp
+  dll.vcxproj -> C:\Users\Danila\source\repos\dll\x64\Debug\dll.dll
