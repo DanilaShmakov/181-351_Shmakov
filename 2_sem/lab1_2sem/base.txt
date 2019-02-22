@@ -1,0 +1,4 @@
+login'user'password'1234'access'1'
+login'manager'password'4321'access'2'
+login'admin'password'123456789'access'3'
+login'Stepan'password'1488'access'1'
