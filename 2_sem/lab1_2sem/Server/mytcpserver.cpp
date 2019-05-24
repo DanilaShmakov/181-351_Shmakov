@@ -1,8 +1,11 @@
 #include "mytcpserver.h"
 #include <QDebug>
 #include <QCoreApplication>
-#include "C:/Users/Danila/Documents/2_sem/lab1_2sem/database.h"
+#include "database.h"
+#include "crypter.h"
+#include <QDebug>
 
+//Делать через QByteArray!!!
 MyTcpServer::~MyTcpServer()
 {
     foreach(int i,SClients.keys()){
@@ -28,56 +31,63 @@ MyTcpServer::MyTcpServer(QObject *parent) : QObject(parent){
 void MyTcpServer::slotNewConnection(){
     if(server_status==1){
         QTcpSocket* clientSocket=mTcpServer->nextPendingConnection();
-        int idusersocs=(int)clientSocket->socketDescriptor();
-        SClients[idusersocs]=clientSocket;
-        SClients[idusersocs]->write("Hello!\n");
-        connect(SClients[idusersocs],&QTcpSocket::readyRead,this, &MyTcpServer::slotServerRead);
-        connect(SClients[idusersocs],&QTcpSocket::disconnected,this,&MyTcpServer::slotClientDisconnected);
+        int idusersocks=(int)clientSocket->socketDescriptor();
+        SClients[idusersocks]=clientSocket;
+        //SClients[idusersocks]->write("Hello!\n");
+        qDebug() << "connected";
+        connect(SClients[idusersocks],&QTcpSocket::readyRead,this, &MyTcpServer::slotServerRead);
+        connect(SClients[idusersocks],&QTcpSocket::disconnected,this,&MyTcpServer::slotClientDisconnected);
     }
 }
 
 void MyTcpServer::slotServerRead(){
-    QTcpSocket *clientSocket = (QTcpSocket*)sender();
-    int id = (int)clientSocket->socketDescriptor();
-    while(clientSocket->bytesAvailable()>0)
-    {
-        QByteArray array =clientSocket->readAll();
-        std::string log = "";
-        std::string pass = "";
-        std::string message;
-        message = array.toStdString();
-        qDebug()<<QString::fromStdString(message);
+    QTcpSocket* clientSocket = (QTcpSocket*)sender();
+       //int idusersocs=clientSocket->socketDescriptor();
+      // QTextStream os(clientSocket);
+           if (clientSocket ->bytesAvailable () >0) {
+               QByteArray array = clientSocket ->readAll();
+               QString mesarray = array;
+               array.clear();
+               array.append(Crypter::decryptString(mesarray));
 
-        // <name_of_function>&<log>&<pass>
-
-        //find name_of_function;
-        int pos = message.find("&");
-        //name_of function = message.substr(0,pos);
-        message.erase(0,pos+1);
-
-        //find login:
-        pos = message.find("&");
-        log = message.substr(0,pos);
-        message.erase(0,pos+1);
-
-        //find login:
-        pos = message.find("&");
-        pass = message.substr(0,pos);
-        message.erase(0,pos+1);
-/*
-        //Пока работаем с putty убираем "лишние" символы
-        pass.pop_back();
-        pass.pop_back();
-*/
-        qDebug()<<"login = "<<QString::fromStdString(log)
-                <<" password = "<< QString::fromStdString(pass)
-                << " result = " << Authorize(log,pass);
-
-        array.clear();
-        array.append(Authorize(log,pass));
-
-        clientSocket->write(array);
-    }
+              // qDebug() << "mesarray is" + mesarray;
+               qDebug() << "array is" + array;
+               QList <QByteArray> all = array.split('&');
+                  qDebug() << "name func is " + all[0];
+               for (int i = 1 ;i < all.size(); i++) {
+                    qDebug() << " " <<  all[i];
+                  }
+                   if (all[0] == "Auth") {
+                       qDebug() << "Authorization";
+                       mydb->Authorize(all[1],all[2],clientSocket);
+                   } else if(all[0] == "Del"){
+                        qDebug() << "Delete";
+                        send_to_client(mydb->del_data(all[1]), clientSocket);
+                   } else if (all[0] == "Chan"){
+                       qDebug() << "Change";
+                       datas a;
+                       a.ID    = all[1];
+                       a.fio   = all[2];
+                       a.type  = all[3];
+                       a.price = all[4];
+                       a.count = all[5];
+                       a.date  = all[6];
+                       send_to_client(mydb->change(a), clientSocket);
+                   } else if (all[0] == "Add") {
+                       qDebug() << "Add";
+                       datas a;
+                       a.ID    = all[1];
+                       a.fio   = all[2];
+                       a.type  = all[3];
+                       a.price = all[4];
+                       a.count = all[5];
+                       a.date  = all[6];
+                       send_to_client(mydb->add_data(a), clientSocket);
+                   } else if (all[0] == "Ref"){
+                       mydb->Refresh(clientSocket);
+                   }
+                   else qDebug() << "something else";
+           }
 }
 
 void MyTcpServer::slotClientDisconnected(){
@@ -87,3 +97,36 @@ void MyTcpServer::slotClientDisconnected(){
     SClients.remove(id);
     qDebug() << QString::fromUtf8("Client is disconnected \n");
 }
+
+void MyTcpServer::send_to_client (QString message, QTcpSocket* clientSocket){
+QByteArray array;
+qDebug() << message;
+array.append(message);
+clientSocket->write(array);
+};
+
+/*
+void MyTcpServer::parsing(QByteArray recieved_array)
+{
+    QList <QByteArray> all = recieved_array.split('&');
+    switch (all[0][0])
+    {
+    case 'A': //AuthAnswer
+
+                if (all[1] == "User"){
+                    qDebug()<<"User";
+                }
+                if (all[1] == "None"){
+                    qDebug()<<"None";
+                }
+        break;
+
+    case 'R': //registration
+
+           break;
+
+
+    }
+
+}
+*/

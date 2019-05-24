@@ -1,5 +1,7 @@
-QT += gui
+QT += sql
+QT += core
 QT += network
+QT += gui
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -18,7 +20,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
     mytcpserver.cpp \
-    ../2_sem/lab1_2sem/database.cpp
+    database.cpp \
+    database.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -27,4 +30,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     mytcpserver.h \
-    ../2_sem/lab1_2sem/database.h
+    database.h \
+    crypter.h
